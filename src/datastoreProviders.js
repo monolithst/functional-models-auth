@@ -1,6 +1,4 @@
-const {
-  ormQuery
-} = require('functional-models-orm')
+const { ormQuery } = require('functional-models-orm')
 const { DEFAULT_MODEL_PERMISSIONS, DEFAULT_ROLES } = require('./constants')
 const { PermissionError } = require('./errors')
 
@@ -8,13 +6,13 @@ const authWrappedDatastoreProvider = ({
   getUserObj,
   getModelPermissionsModel,
   datastoreProvider,
-  defaultPermissions=DEFAULT_MODEL_PERMISSIONS,  // this MUST match your ModelPermissions structure (outside of the model property).
-  adminRole=DEFAULT_ROLES.Admin,
+  defaultPermissions = DEFAULT_MODEL_PERMISSIONS, // this MUST match your ModelPermissions structure (outside of the model property).
+  adminRole = DEFAULT_ROLES.Admin,
 }) => {
-
-  const _getOrCreatePermissions = async (model) => {
+  const _getOrCreatePermissions = async model => {
     const modelName = model.getName()
-    const query = ormQuery.ormQueryBuilder()
+    const query = ormQuery
+      .ormQueryBuilder()
       .property('model', modelName)
       .compile()
     const ModelPermissions = await getModelPermissionsModel()
@@ -22,14 +20,18 @@ const authWrappedDatastoreProvider = ({
     if (!permissions) {
       const instance = ModelPermissions.create({
         model: modelName,
-        ...defaultPermissions
+        ...defaultPermissions,
       })
-      return await instance.functions.save()
+      return instance.functions.save()
     }
     return permissions
   }
 
-  const _checkPermissionAndError = async (model, functionName, permissionMethod) => {
+  const _checkPermissionAndError = async (
+    model,
+    functionName,
+    permissionMethod
+  ) => {
     const user = await getUserObj()
     if (!user) {
       throw new Error(`No user found!`)
@@ -38,8 +40,6 @@ const authWrappedDatastoreProvider = ({
       return undefined
     }
     const permissions = await _getOrCreatePermissions(model)
-    console.log("about to call")
-    console.log(functionName)
     const roles = await permissionMethod(permissions)
     if (!user.roles.find(role => roles.includes(role))) {
       throw new PermissionError(model.getName(), functionName)
@@ -47,31 +47,42 @@ const authWrappedDatastoreProvider = ({
     return undefined
   }
 
-  const deleteObj = (instance) => {
+  const deleteObj = instance => {
     return Promise.resolve().then(async () => {
-      console.log("in delete")
-      await _checkPermissionAndError(instance.meta.getModel(), 'delete', permissions=>permissions.getDelete())
+      await _checkPermissionAndError(
+        instance.meta.getModel(),
+        'delete',
+        permissions => permissions.getDelete()
+      )
       return datastoreProvider.delete(instance)
     })
   }
 
   const search = (model, query) => {
     return Promise.resolve().then(async () => {
-      await _checkPermissionAndError(model, 'read', permissions=>permissions.getRead())
+      await _checkPermissionAndError(model, 'read', permissions =>
+        permissions.getRead()
+      )
       return datastoreProvider.search(model, query)
     })
   }
 
   const retrieve = (model, id) => {
     return Promise.resolve().then(async () => {
-      await _checkPermissionAndError(model, 'read', permissions=>permissions.getRead())
+      await _checkPermissionAndError(model, 'read', permissions =>
+        permissions.getRead()
+      )
       return datastoreProvider.retrieve(model, id)
     })
   }
 
-  const save = (instance) => {
+  const save = instance => {
     return Promise.resolve().then(async () => {
-      await _checkPermissionAndError(instance.meta.getModel(), 'write', permissions=>permissions.getWrite())
+      await _checkPermissionAndError(
+        instance.meta.getModel(),
+        'write',
+        permissions => permissions.getWrite()
+      )
       return datastoreProvider.save(instance)
     })
   }
@@ -87,5 +98,5 @@ const authWrappedDatastoreProvider = ({
 }
 
 module.exports = {
-  authWrappedDatastoreProvider
+  authWrappedDatastoreProvider,
 }

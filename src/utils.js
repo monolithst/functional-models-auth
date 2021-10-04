@@ -9,5 +9,5 @@ const getObjToArray = array => {
 }
 
 module.exports = {
-  getObjToArray
+  getObjToArray,
 }

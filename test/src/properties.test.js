@@ -10,4 +10,3 @@ describe('/src/properties.js', () => {
     })
   })
 })
-

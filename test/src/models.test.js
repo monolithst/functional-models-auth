@@ -2,7 +2,6 @@ const sinon = require('sinon')
 const assert = require('chai').assert
 const models = require('../../src/models')
 
-
 describe('/src/models.js', () => {
   describe('#()', () => {
     it('should create an object with "Users"', () => {
@@ -17,7 +16,7 @@ describe('/src/models.js', () => {
     })
     it('should use the model class passed into Model', () => {
       const Model = sinon.stub()
-      models({Model})
+      models({ Model })
       sinon.assert.called(Model)
     })
     describe('#Users.create()', () => {
@@ -25,7 +24,13 @@ describe('/src/models.js', () => {
         const authModels = models({})
         const user = authModels.Users.create({})
         const actual = Object.keys(user)
-        const expected = ['getId', 'getFirstName', 'getLastName', 'getEmail', 'getRoles' ]
+        const expected = [
+          'getId',
+          'getFirstName',
+          'getLastName',
+          'getEmail',
+          'getRoles',
+        ]
         assert.includeMembers(actual, expected)
       })
     })
@@ -34,7 +39,7 @@ describe('/src/models.js', () => {
         const authModels = models({})
         const user = authModels.ModelPermissions.create({})
         const actual = Object.keys(user)
-        const expected = ['getId', 'getRead', 'getWrite', 'getDelete' ]
+        const expected = ['getId', 'getRead', 'getWrite', 'getDelete']
         assert.includeMembers(actual, expected)
       })
     })
