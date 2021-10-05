@@ -1,5 +1,8 @@
+const chai = require('chai')
+const assert = chai.assert
+const chaiAsPromised = require('chai-as-promised')
+chai.use(chaiAsPromised)
 const sinon = require('sinon')
-const assert = require('chai').assert
 const datastoreProviders = require('../../src/datastoreProviders')
 const models = require('../../src/models')
 const { DEFAULT_ROLES } = require('../../src/constants')
@@ -73,15 +76,7 @@ describe('/src/datastoreProviders.js', () => {
         )
         const protectedOrm = orm({ datastoreProvider: wrappedProvider })
         const model = TEST_MODEL(protectedOrm.Model)
-        const error = await wrappedProvider
-          .search(model, {})
-          .then(() => {
-            return false
-          })
-          .catch(e => {
-            return true
-          })
-        assert.isTrue(error)
+        assert.isRejected(wrappedProvider.search(model, {}))
       })
       it('should call datastoreProvider.search when a user with a Viewer role tries to read a model', async () => {
         const datastoreProvider = sinon.spy(datastore.memory(TEST_SEED_DATA_1))
@@ -129,15 +124,7 @@ describe('/src/datastoreProviders.js', () => {
         )
         const protectedOrm = orm({ datastoreProvider: wrappedProvider })
         const model = TEST_MODEL(protectedOrm.Model)
-        const error = await wrappedProvider
-          .search(model, {})
-          .then(() => {
-            return false
-          })
-          .catch(e => {
-            return true
-          })
-        assert.isTrue(error)
+        await assert.isRejected(wrappedProvider.search(model, {}))
       })
       it('should throw an exception when a Viewer role user tries to read a model when the default permissions do not allow viewer', async () => {
         const datastoreProvider = sinon.spy(datastore.memory())
@@ -155,15 +142,7 @@ describe('/src/datastoreProviders.js', () => {
         )
         const protectedOrm = orm({ datastoreProvider: wrappedProvider })
         const model = TEST_MODEL(protectedOrm.Model)
-        const error = await wrappedProvider
-          .search(model, {})
-          .then(() => {
-            return false
-          })
-          .catch(e => {
-            return true
-          })
-        assert.isTrue(error)
+        await assert.isRejected(wrappedProvider.search(model, {}))
       })
     })
     describe('#retrieve()', () => {
