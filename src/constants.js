@@ -1,7 +1,7 @@
 const { getObjToArray } = require('./utils')
 
 const MAX_NAME_LENGTH = 50
-const MIN_NAME_LENGTH = 50
+const MIN_NAME_LENGTH = 3
 
 const DEFAULT_ROLES = getObjToArray([
   'Viewer',
