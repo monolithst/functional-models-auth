@@ -1,7 +1,10 @@
 /* eslint-disable functional/no-this-expression */
 /* eslint-disable functional/no-class */
 class PermissionError extends Error {
-  constructor(modelName, functionName) {
+  public modelName: string
+  public functionName : string
+
+  constructor(modelName: string, functionName: string) {
     super('User does not have access to this function')
     this.name = 'PermissionError'
     this.modelName = modelName
@@ -11,6 +14,6 @@ class PermissionError extends Error {
 /* eslint-enable functional/no-this-expression */
 /* eslint-enable functional/no-class */
 
-module.exports = {
+export {
   PermissionError,
 }
