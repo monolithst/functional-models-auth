@@ -99,7 +99,6 @@
   },
   "exclude": [
     "node_modules",
-    "b-test",
     "dist"
   ]
 }
