@@ -10,6 +10,8 @@ import {
   PropertyInstance,
   ModelMethod,
   ModelInstanceMethod,
+  ModelInstance,
+  Model,
 } from 'functional-models/interfaces'
 import { OrmModel, OrmModelInstance, OrmModelFactory } from 'functional-models-orm/interfaces'
 import { ormQuery, properties } from 'functional-models-orm'
@@ -91,7 +93,7 @@ const models = ({
           return Promise.resolve()
             .then(async () => {
               const data = await user.toObj()
-              const newData = { ...data, enabled: true} as UserType
+              const newData = { ...data, enabled: true} 
               return Users.create(newData).save()
             })
         },
