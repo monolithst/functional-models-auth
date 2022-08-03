@@ -128,9 +128,10 @@ describe('/src/models.ts', () => {
           read: [],
           write: [],
           delete: [],
+          search: [],
         })
         const actual = Object.keys(modelRole.get)
-        const expected = ['id', 'read', 'write', 'delete']
+        const expected = ['id', 'read', 'write', 'delete', 'search']
         assert.includeMembers(actual, expected)
       })
     })

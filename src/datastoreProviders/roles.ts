@@ -2,7 +2,7 @@ import {FunctionalModel, Model, ModelInstance, MaybePromise, PrimaryKeyType} fro
 import { ormQuery } from 'functional-models-orm'
 import { DatastoreProvider, OrmModel, OrmModelInstance, OrmQuery } from 'functional-models-orm/interfaces'
 import { DEFAULT_MODEL_ROLES, DefaultRoles } from '../constants'
-import { PermissionError } from '../errors'
+import { PermissionError, SoftAuthError } from '../errors'
 import { ModelRoleType, AuthWrapperInputs } from '../interfaces'
 
 
@@ -12,6 +12,7 @@ const authWrappedDatastoreProvider = <T extends FunctionalModel, TModel extends 
   datastoreProvider,
   defaultModelRoles = DEFAULT_MODEL_ROLES, // this MUST match your ModelRoles structure (outside of the model property).
   adminRole = DefaultRoles.Admin,
+  softAuthError=true,
 }: AuthWrapperInputs) : DatastoreProvider => {
   const _getOrCreateRoles = async <T extends FunctionalModel>(model: Model<T>) => {
     const modelName = model.getName()
@@ -41,15 +42,20 @@ const authWrappedDatastoreProvider = <T extends FunctionalModel, TModel extends 
       throw new Error(`No user found!`)
     }
     const userRoles = user.get.roles()
+    // Admin can do whatever it wants.
     if (userRoles.includes(adminRole)) {
       return undefined
     }
     const modelRoles = await _getOrCreateRoles<T>(model)
     const roles = await rolesMethod(modelRoles)
     if (!userRoles.find((role: string) => roles.includes(role))) {
-      throw new PermissionError(model.getName(), functionName)
+      if (softAuthError === false) {
+        throw new PermissionError(model.getName(), functionName)
+      } else {
+        throw new SoftAuthError()
+      }
     }
-    return undefined
+    return false 
   }
 
   const deleteObj = <T extends FunctionalModel, TModel extends Model<T>>(instance: ModelInstance<T, TModel>) => {
@@ -65,8 +71,8 @@ const authWrappedDatastoreProvider = <T extends FunctionalModel, TModel extends 
 
   const search = <T extends FunctionalModel, TModel extends OrmModel<T>>(model: TModel, query: OrmQuery) => {
     return Promise.resolve().then(async () => {
-      await _checkPermissionAndError<T, TModel>(model, 'read', modelRoles =>
-        modelRoles.get.read()
+      await _checkPermissionAndError<T, TModel>(model, 'search', modelRoles =>
+        modelRoles.get.search()
       )
       return datastoreProvider.search<T>(model, query)
     })

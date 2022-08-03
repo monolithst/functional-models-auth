@@ -21,6 +21,10 @@ const DEFAULT_MODEL_ROLES = {
     DefaultRoles.Contributor,
     DefaultRoles.Viewer,
   ],
+  search: [
+    DefaultRoles.SeniorContributor,
+    DefaultRoles.Contributor,
+  ],
   write: [DefaultRoles.SeniorContributor, DefaultRoles.Contributor],
   delete: [DefaultRoles.SeniorContributor],
 }

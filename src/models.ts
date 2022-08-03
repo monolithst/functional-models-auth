@@ -110,6 +110,7 @@ const models = ({
         read: RolesProperty(rolesArray),
         write: RolesProperty(rolesArray),
         delete: RolesProperty(rolesArray),
+        search: RolesProperty(rolesArray),
         ...modelRolesConfig.properties,
       },
       modelMethods: {

@@ -49,6 +49,11 @@ const TEST_SEED_DATA_1 = {
         DefaultRoles.Contributor,
         DefaultRoles.SeniorContributor,
       ],
+      search: [
+        DefaultRoles.Viewer,
+        DefaultRoles.Contributor,
+        DefaultRoles.SeniorContributor,
+      ],
       delete: [DefaultRoles.SeniorContributor],
     },
   ],
@@ -97,7 +102,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         //@ts-ignore
         assert.isTrue(datastoreProvider.search.called)
       })
-      it('should call ModelRoles.create when no existing modelRoles exist', async () => {
+      it('should call throw an exception when a Viewer tries to search, and the default role for search does not include viewer', async () => {
         const datastoreProvider = sinon.spy(memoryDatastore()) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
@@ -105,6 +110,22 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const wrappedProvider = rolesDatastoreProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_1),
+            getModelRolesModel: () => modelRoles as unknown as OrmModel<ModelRoleType>,
+            datastoreProvider,
+          }
+        )
+        const protectedOrm = orm({ datastoreProvider: wrappedProvider })
+        const model = TEST_MODEL(protectedOrm.BaseModel)
+        assert.isRejected(wrappedProvider.search(model, ormQueryBuilder().compile()))
+      })
+      it('should call ModelRoles.create when no existing modelRoles exist', async () => {
+        const datastoreProvider = sinon.spy(memoryDatastore()) as DatastoreProvider
+        const unprotectedOrm = orm({ datastoreProvider })
+        const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
+        const modelRoles = sinon.spy(authModels.ModelRoles)
+        const wrappedProvider = rolesDatastoreProvider(
+          {
+            getUserObj: () => authModels.Users.create(TEST_USER_CONTRIBUTOR),
             getModelRolesModel: () => modelRoles as unknown as OrmModel<ModelRoleType>,
             datastoreProvider,
           }
@@ -142,6 +163,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
             defaultModelRoles: {
               write: [],
               delete: [],
+              search: [DefaultRoles.Admin],
               read: [DefaultRoles.Admin],
             },
           }
