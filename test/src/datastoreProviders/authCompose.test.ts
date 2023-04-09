@@ -71,6 +71,7 @@ const _setup = ({
   user=null,
   getCurrentUser=undefined,
   seedData=undefined,
+  additionalDatastoreProvider=null,
 }: any) => {
   // @ts-ignore
   const datastoreProvider = sinon.spy(memoryDatastore(seedData)) as DatastoreProvider
@@ -87,7 +88,7 @@ const _setup = ({
     getCurrentUser,
     getUserOwnedModels: () => values(allModels) as unknown as OrmModel<any>[],
     datastoreProvider,
-      softAuthError: true,
+    softAuthError: true,
   })
   const rDatastore = rolesDatastoreProvider({
     getUserObj: getCurrentUser,
@@ -97,8 +98,10 @@ const _setup = ({
   })
   const authDatastoreProviders = [
     oDatastore,
-    rDatastore
+    rDatastore,
+    ...additionalDatastoreProvider ? [additionalDatastoreProvider] : [],
   ]
+  console.log(authDatastoreProviders)
   const instance = authComposeDatastoreProvider({
     authDatastoreProviders,
     datastoreProvider,
@@ -157,7 +160,79 @@ describe('/src/datastoreProviders/authCompose.ts', () => {
         owner: anotherUser,
         name: 'my-name',
       })
-      await assert.isRejected(datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance))
+      await assert.isRejected(datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance).catch(e => {
+        console.log(e)
+        throw e
+      }))
+    })
+    it('should throw an exception because the underlying datastoreProvider throws an exception that isnt a SoftAuthError', async () => {
+
+      const additionalDatastoreProvider : any = {
+        save: () => {
+          return Promise.resolve()
+            .then(() => {
+                throw new Error(`My Error`)
+            })
+        }
+      }
+      const { allModels, datastoreProvider, BaseModel, authModels, getCurrentUser } = _setup({
+        additionalDatastoreProvider
+      })
+      await authModels.ModelRoles.create({
+        model: allModels.TestModel.getName(),
+        read: [],
+        write: [],
+        search: [],
+        delete: [],
+      }).save()
+      const anotherUser = authModels.Users.create(TEST_USER_2_DATA)
+      const myModelInstance = allModels.TestModel.create({
+        owner: anotherUser,
+        name: 'my-name',
+      })
+      await assert.isRejected(datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance).catch(e => {
+        throw e
+      }))
+    })
+  })
+  describe('#delete()', () => {
+    it('should be able to delete when the model has the correct owner but not the role', async () => {
+      const { allModels, datastoreProvider, BaseModel, authModels, getCurrentUser } = _setup({})
+      const model = await authModels.ModelRoles.create({
+        model: allModels.TestModel.getName(),
+        read: [],
+        write: [],
+        search: [],
+        delete: [],
+      }).save()
+      const owner = getCurrentUser()
+      const myModelInstance = allModels.TestModel.create({
+        owner,
+        name: 'my-name',
+      })
+      await datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance)
+      await datastoreProvider.delete<TestModelType, OrmModel<TestModelType>>(myModelInstance)
+    })
+  })
+  describe('#search()', () => {
+    it('should be able to search and find the model when it has the correct owner but not the role', async () => {
+      const { allModels, datastoreProvider, BaseModel, authModels, getCurrentUser } = _setup({})
+      const model = await authModels.ModelRoles.create({
+        model: allModels.TestModel.getName(),
+        read: [],
+        write: [],
+        search: [],
+        delete: [],
+      }).save()
+      const owner = getCurrentUser()
+      const myModelInstance = allModels.TestModel.create({
+        owner,
+        name: 'my-name',
+      })
+      await datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance)
+      const actual = await datastoreProvider.search(allModels.TestModel, ormQuery.ormQueryBuilder().compile())
+      const expected = 2
+      assert.equal(actual.instances.length, expected)
     })
   })
 })

@@ -6,17 +6,39 @@ import { asyncMap } from '../utils'
 import { SoftAuthError, PermissionError, CouldNotFindOwnerError, NotOwnerOfModelError } from '../errors'
 import { UserType, MaybePromise, OwnerDatastoreInput, OwnerGetter } from '../interfaces'
 
-const _defaultGetOwner = <TUserType extends UserType>() : OwnerGetter => async (modelInstance: any) => {
-  return await (get(modelInstance, 'get.owner', () => undefined ))()
-}
-
 const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Model<T>, TUserType extends UserType>({
   getCurrentUser,
   datastoreProvider,
   getUserOwnedModels,
-  getOwner=_defaultGetOwner<TUserType>(),
+  getOwner=undefined,
   softAuthError=true,
 }: OwnerDatastoreInput<TUserType>) : DatastoreProvider => {
+
+  const _defaultGetOwner = <TUserType extends UserType>() : OwnerGetter => async (modelInstance: any) => {
+    const value = await (get(modelInstance, 'get.owner', () => undefined ))()
+    if (!value) {
+      return value
+    }
+    if (typeof value !== 'object') {
+      const userModel = (await getCurrentUser()).getModel()
+      const searchResults = await datastoreProvider.search<TUserType>(
+        // @ts-ignore
+        userModel,
+        ormQuery.ormQueryBuilder()
+        .property(userModel.getPrimaryKeyName(), value)
+        .take(1)
+        .compile()
+      )
+      const data = searchResults.instances[0]
+      if (!data) {
+        return undefined
+      }
+      // @ts-ignore
+      return userModel.create(data)
+    }
+    return value
+  }
+  getOwner = getOwner || _defaultGetOwner<TUserType>()
 
   const _isUserLockedModel = async (model: any) => {
     const modelNames = (await getUserOwnedModels()).map(model => model.getName())
@@ -25,10 +47,14 @@ const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Mod
   }
 
   const _ifNotOwnerThrow = async (user: any, modelInstance: any, shouldThrow: boolean) => {
+    console.log(modelInstance)
+    console.log(await modelInstance.get.owner())
+    // @ts-ignore
     const owner = await getOwner(modelInstance)
     if (!owner) {
       throw new CouldNotFindOwnerError(modelInstance.getModel().getName(), `${modelInstance.getPrimaryKey()}`)
     }
+    console.log(owner)
     if (owner.getPrimaryKey() !== user.getPrimaryKey()) {
       /*
       The current user is not the owner of this model.
@@ -53,6 +79,11 @@ const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Mod
   const _doOwnerProcess = async (modelInstance: any, shouldThrow=true) => {
     if (_isUserLockedModel(modelInstance.getModel())) {
       const user = await getCurrentUser()
+      /*
+       TODO: There is a major vulnerability. A person can change the owner of the model instance to make them the owner, and then delete/save or whatever the
+      model because they'll be the owner now. This whole thing needs to retrieve the modelInstance that is being saved/deleted, and then check THAT ONE first.
+
+      */
       return _ifNotOwnerThrow(user, modelInstance, shouldThrow)
     }
     return true
