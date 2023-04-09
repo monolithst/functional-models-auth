@@ -1,8 +1,8 @@
 import { get } from 'lodash'
+import { mapLimit } from 'modern-async'
 import {FunctionalModel, Model, ModelInstance, PrimaryKeyType} from 'functional-models/interfaces'
 import { ormQuery } from 'functional-models-orm'
 import { DatastoreProvider, OrmModel, OrmModelInstance, OrmQuery } from 'functional-models-orm/interfaces'
-import { asyncMap } from '../utils'
 import { SoftAuthError, PermissionError, CouldNotFindOwnerError, NotOwnerOfModelError } from '../errors'
 import { UserType, MaybePromise, OwnerDatastoreInput, OwnerGetter } from '../interfaces'
 
@@ -19,6 +19,8 @@ const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Mod
     if (!value) {
       return value
     }
+
+    // Do we need to fetch the owner???
     if (typeof value !== 'object') {
       const userModel = (await getCurrentUser()).getModel()
       const searchResults = await datastoreProvider.search<TUserType>(
@@ -47,15 +49,12 @@ const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Mod
   }
 
   const _ifNotOwnerThrow = async (user: any, modelInstance: any, shouldThrow: boolean) => {
-    console.log(modelInstance)
-    console.log(await modelInstance.get.owner())
     // @ts-ignore
     const owner = await getOwner(modelInstance)
     if (!owner) {
-      throw new CouldNotFindOwnerError(modelInstance.getModel().getName(), `${modelInstance.getPrimaryKey()}`)
+      throw new CouldNotFindOwnerError(modelInstance.getModel().getName(), `${await modelInstance.getPrimaryKey()}`)
     }
-    console.log(owner)
-    if (owner.getPrimaryKey() !== user.getPrimaryKey()) {
+    if (await owner.getPrimaryKey() !== await user.getPrimaryKey()) {
       /*
       The current user is not the owner of this model.
       There are three possible responses.
@@ -67,7 +66,7 @@ const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Mod
 
       if (shouldThrow) {
         if (softAuthError === false) {
-          throw new NotOwnerOfModelError(modelInstance.getModel().getName(), `${owner.getPrimaryKey()}`, `${modelInstance.getPrimaryKey()}`)
+          throw new NotOwnerOfModelError(modelInstance.getModel().getName(), `${await owner.getPrimaryKey()}`, `${await modelInstance.getPrimaryKey()}`)
         }
         throw new SoftAuthError()
       }
@@ -101,14 +100,14 @@ const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Mod
       const results = await datastoreProvider.search<T>(model, query)
       if (results.instances.length > 0) {
         const instances = results.instances.map(model.create)
-        const boolAndInstance = await asyncMap<ModelInstance<T, Model<T>>, [boolean, ModelInstance<T, Model<T>>]>(instances, async (instance) => {
+        const boolAndInstance = await mapLimit(instances, async (instance) => {
           const shouldContinue = await _doOwnerProcess(instance, false)
           return [shouldContinue, instance]
-        })
+        }, 1)
         const finalInstances : readonly ModelInstance<T, Model<T>>[] = boolAndInstance
           .filter((entry: any) => entry[0])
           .map((entry: any) => entry[1] as ModelInstance<T, Model<T>>)
-        const data = await asyncMap(finalInstances, instance => instance.toObj())
+        const data = await mapLimit(finalInstances, instance => instance.toObj(), 1)
         return {
           instances: data,
           page: results.page

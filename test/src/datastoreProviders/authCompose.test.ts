@@ -101,7 +101,6 @@ const _setup = ({
     rDatastore,
     ...additionalDatastoreProvider ? [additionalDatastoreProvider] : [],
   ]
-  console.log(authDatastoreProviders)
   const instance = authComposeDatastoreProvider({
     authDatastoreProviders,
     datastoreProvider,
@@ -161,7 +160,6 @@ describe('/src/datastoreProviders/authCompose.ts', () => {
         name: 'my-name',
       })
       await assert.isRejected(datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance).catch(e => {
-        console.log(e)
         throw e
       }))
     })
@@ -216,7 +214,9 @@ describe('/src/datastoreProviders/authCompose.ts', () => {
   })
   describe('#search()', () => {
     it('should be able to search and find the model when it has the correct owner but not the role', async () => {
-      const { allModels, datastoreProvider, BaseModel, authModels, getCurrentUser } = _setup({})
+      const { allModels, datastoreProvider, BaseModel, authModels, getCurrentUser } = _setup({ seedData: {
+        Users: [TEST_USER_DATA]
+      }})
       const model = await authModels.ModelRoles.create({
         model: allModels.TestModel.getName(),
         read: [],
@@ -231,7 +231,7 @@ describe('/src/datastoreProviders/authCompose.ts', () => {
       })
       await datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance)
       const actual = await datastoreProvider.search(allModels.TestModel, ormQuery.ormQueryBuilder().compile())
-      const expected = 2
+      const expected = 1
       assert.equal(actual.instances.length, expected)
     })
   })

@@ -82,6 +82,7 @@
   "dependencies": {
     "functional-models": "^2.0.10",
     "functional-models-orm": "^2.0.18",
-    "lodash": "^4.17.21"
+    "lodash": "^4.17.21",
+    "modern-async": "^1.1.3"
   }
 }
