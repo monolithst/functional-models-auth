@@ -11,6 +11,8 @@ import { DefaultRoles } from '../../../src/constants'
 import { ModelRoleType } from '../../../src/interfaces'
 const { assert } = chai
 const { ormQueryBuilder } = ormQuery
+import { SoftAuthError, PermissionError } from '../../../src/errors'
+import { assertErrorThrown } from '../../utils'
 
 const TEST_USER_1 = {
   id: '123',
@@ -102,7 +104,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         //@ts-ignore
         assert.isTrue(datastoreProvider.search.called)
       })
-      it('should call throw an exception when a Viewer tries to search, and the default role for search does not include viewer', async () => {
+      it('should throw a soft auth error when a Viewer tries to search, and the default role for search does not include viewer and softAuthError is true', async () => {
         const datastoreProvider = sinon.spy(memoryDatastore()) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
@@ -112,11 +114,29 @@ describe('/src/datastoreProviders/roles.ts', () => {
             getUserObj: () => authModels.Users.create(TEST_USER_1),
             getModelRolesModel: () => modelRoles as unknown as OrmModel<ModelRoleType>,
             datastoreProvider,
+            softAuthError:true,
           }
         )
         const protectedOrm = orm({ datastoreProvider: wrappedProvider })
         const model = TEST_MODEL(protectedOrm.BaseModel)
-        assert.isRejected(wrappedProvider.search(model, ormQueryBuilder().compile()))
+        await assertErrorThrown(SoftAuthError, wrappedProvider.search)(model, ormQueryBuilder().compile())
+      })
+      it('should throw a permission error when a Viewer tries to search, and the default role for search does not include viewer and softAuthError is false', async () => {
+        const datastoreProvider = sinon.spy(memoryDatastore()) as DatastoreProvider
+        const unprotectedOrm = orm({ datastoreProvider })
+        const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
+        const modelRoles = sinon.spy(authModels.ModelRoles)
+        const wrappedProvider = rolesDatastoreProvider(
+          {
+            getUserObj: () => authModels.Users.create(TEST_USER_1),
+            getModelRolesModel: () => modelRoles as unknown as OrmModel<ModelRoleType>,
+            datastoreProvider,
+            softAuthError: false,
+          }
+        )
+        const protectedOrm = orm({ datastoreProvider: wrappedProvider })
+        const model = TEST_MODEL(protectedOrm.BaseModel)
+        await assertErrorThrown(PermissionError, wrappedProvider.search)(model, ormQueryBuilder().compile())
       })
       it('should call ModelRoles.create when no existing modelRoles exist', async () => {
         const datastoreProvider = sinon.spy(memoryDatastore()) as DatastoreProvider

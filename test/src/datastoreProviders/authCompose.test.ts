@@ -14,15 +14,9 @@ import authComposeDatastoreProvider from '../../../src/datastoreProviders/authCo
 import models from '../../../src/models'
 import { DefaultRoles } from '../../../src/constants'
 import { UserType } from '../../../src/interfaces'
+import { AuthError } from '../../../src/errors'
+import { assertErrorThrown } from '../../utils'
 const { assert } = chai
-
-  /*
-  getCurrentUser,
-  datastoreProvider,
-  getUserOwnedModels,
-  getOwner=_defaultGetOwner<TUserType>(),
-  throwIfNotUser=true,
- */
 
 const TEST_USER_DATA = {
   id: 'my-test-user',
@@ -72,6 +66,7 @@ const _setup = ({
   getCurrentUser=undefined,
   seedData=undefined,
   additionalDatastoreProvider=null,
+  noAuthDatastores=null,
 }: any) => {
   // @ts-ignore
   const datastoreProvider = sinon.spy(memoryDatastore(seedData)) as DatastoreProvider
@@ -102,7 +97,7 @@ const _setup = ({
     ...additionalDatastoreProvider ? [additionalDatastoreProvider] : [],
   ]
   const instance = authComposeDatastoreProvider({
-    authDatastoreProviders,
+    ...(noAuthDatastores ? {} : { authDatastoreProviders}),
     datastoreProvider,
   })
 
@@ -210,6 +205,45 @@ describe('/src/datastoreProviders/authCompose.ts', () => {
       })
       await datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance)
       await datastoreProvider.delete<TestModelType, OrmModel<TestModelType>>(myModelInstance)
+    })
+  })
+  describe('#retrieve()', () => {
+    it('should be able to retrieve when the model has the correct owner but not the role', async () => {
+      const { allModels, datastoreProvider, BaseModel, authModels, getCurrentUser } = _setup({})
+      const model = await authModels.ModelRoles.create({
+        model: allModels.TestModel.getName(),
+        read: [],
+        write: [],
+        search: [],
+        delete: [],
+      }).save()
+      await authModels.Users.create(TEST_USER_DATA).save()
+      const owner = getCurrentUser()
+      const myModelInstance = allModels.TestModel.create({
+        owner,
+        name: 'my-name',
+      })
+      await datastoreProvider.save<TestModelType, OrmModel<TestModelType>>(myModelInstance)
+      await datastoreProvider.retrieve<TestModelType>(allModels.TestModel, await myModelInstance.getPrimaryKey())
+    })
+  })
+  describe('#retrieve()', () => {
+    it('should throw an auth error because there are no authDatastoreProviders passed in', async () => {
+      const { allModels, datastoreProvider, BaseModel, authModels, getCurrentUser } = _setup({ noAuthDatastores: true})
+      const model = await authModels.ModelRoles.create({
+        model: allModels.TestModel.getName(),
+        read: [],
+        write: [],
+        search: [],
+        delete: [],
+      }).save()
+      await authModels.Users.create(TEST_USER_DATA).save()
+      const owner = getCurrentUser()
+      const myModelInstance = allModels.TestModel.create({
+        owner,
+        name: 'my-name',
+      })
+      await assertErrorThrown(AuthError, datastoreProvider.retrieve)(allModels.TestModel, await myModelInstance.getPrimaryKey())
     })
   })
   describe('#search()', () => {

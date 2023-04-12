@@ -52,6 +52,13 @@ type OwnerDatastoreInput<TUserType extends UserType> = {
   getOwner?: OwnerGetter,
 } & AuthComposableInput 
 
+type UserDatastoreInput<TUserType extends UserType> = {
+  getCurrentUser: () => MaybePromise<OrmModelInstance<TUserType>>,
+  datastoreProvider: DatastoreProvider,
+  allowRead?: boolean,
+  omitKeys?: string[]
+} & AuthComposableInput 
+
 export {
   ModelRoleType,
   ModelRoleStructure,
@@ -61,4 +68,5 @@ export {
   AuthComposableInput,
   OwnerDatastoreInput,
   OwnerGetter,
+  UserDatastoreInput,
 }

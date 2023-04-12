@@ -15,7 +15,7 @@ const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Mod
 }: OwnerDatastoreInput<TUserType>) : DatastoreProvider => {
 
   const _defaultGetOwner = <TUserType extends UserType>() : OwnerGetter => async (modelInstance: any) => {
-    const value = await (get(modelInstance, 'get.owner', () => undefined ))()
+    const value = await (get(modelInstance, 'get.owner'))()
     if (!value) {
       return value
     }
@@ -70,13 +70,15 @@ const userOwnerDatastoreWrapper = <T extends FunctionalModel, TModel extends Mod
         }
         throw new SoftAuthError()
       }
+      // Occurs when not throwing.
       return false
     }
+    // When we found our owner
     return true
   }
 
   const _doOwnerProcess = async (modelInstance: any, shouldThrow=true) => {
-    if (_isUserLockedModel(modelInstance.getModel())) {
+    if (await _isUserLockedModel(modelInstance.getModel())) {
       const user = await getCurrentUser()
       /*
        TODO: There is a major vulnerability. A person can change the owner of the model instance to make them the owner, and then delete/save or whatever the
