@@ -9,7 +9,7 @@ import { UserType, UserDatastoreInput } from '../interfaces'
 
 Does not enable delete, nor search.
 */
-export const create = <T extends FunctionalModel, TModel extends OrmModel<T>, TUserType extends UserType>({
+export default <T extends FunctionalModel, TModel extends OrmModel<T>, TUserType extends UserType>({
   getCurrentUser,
   datastoreProvider,
   allowRead=true,

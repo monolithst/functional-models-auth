@@ -1,4 +1,11 @@
-import rolesDatastoreProvider from './roles'
+import rolesProvider from './roles'
+import authComposeProvider from './authCompose'
+import ownerProvider from './owner' 
+import userProvider from './user'
+
 export {
-  rolesDatastoreProvider
+  authComposeProvider,
+  ownerProvider,
+  rolesProvider,
+  userProvider,
 }

@@ -5,7 +5,7 @@ import sinon from 'sinon'
 import { orm, ormQuery } from 'functional-models-orm'
 import { DatastoreProvider, OrmModel } from 'functional-models-orm/interfaces'
 import memoryDatastore from 'functional-models-orm/datastore/memory'
-import { rolesDatastoreProvider } from '../../../src/datastoreProviders'
+import { rolesProvider } from '../../../src/datastoreProviders'
 import models from '../../../src/models'
 import { DefaultRoles } from '../../../src/constants'
 import { ModelRoleType } from '../../../src/interfaces'
@@ -69,13 +69,13 @@ const TEST_SEED_DATA_1 = {
 const TEST_MODEL = (Model: any) => Model('TEST_MODEL', { properties: {}})
 
 describe('/src/datastoreProviders/roles.ts', () => {
-  describe('#rolesDatastoreProvider()', () => {
+  describe('#rolesProvider()', () => {
     describe('#search()', () => {
       it('should throw an exception if getUserObj returns empty', async () => {
         const datastoreProvider = sinon.spy(memoryDatastore(TEST_SEED_DATA_1)) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             //@ts-ignore
             getUserObj: () => null,
@@ -91,7 +91,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const datastoreProvider = sinon.spy(memoryDatastore(TEST_SEED_DATA_1)) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_1),
             getModelRolesModel: () => authModels.ModelRoles,
@@ -109,7 +109,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
         const modelRoles = sinon.spy(authModels.ModelRoles)
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_1),
             getModelRolesModel: () => modelRoles as unknown as OrmModel<ModelRoleType>,
@@ -126,7 +126,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
         const modelRoles = sinon.spy(authModels.ModelRoles)
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_1),
             getModelRolesModel: () => modelRoles as unknown as OrmModel<ModelRoleType>,
@@ -143,7 +143,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
         const modelRoles = sinon.spy(authModels.ModelRoles)
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_CONTRIBUTOR),
             getModelRolesModel: () => modelRoles as unknown as OrmModel<ModelRoleType>,
@@ -160,7 +160,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const datastoreProvider = sinon.spy(memoryDatastore(TEST_SEED_DATA_1)) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_2),
             getModelRolesModel: () => authModels.ModelRoles,
@@ -175,7 +175,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const datastoreProvider = sinon.spy(memoryDatastore()) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_2),
             getModelRolesModel: () => authModels.ModelRoles,
@@ -198,7 +198,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const datastoreProvider = sinon.spy(memoryDatastore(TEST_SEED_DATA_1)) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_SENIOR_CONTRIBUTOR),
             getModelRolesModel: () => authModels.ModelRoles,
@@ -217,7 +217,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const datastoreProvider = sinon.spy(memoryDatastore(TEST_SEED_DATA_1)) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_CONTRIBUTOR),
             getModelRolesModel: () => authModels.ModelRoles,
@@ -237,7 +237,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const datastoreProvider = sinon.spy(memoryDatastore(TEST_SEED_DATA_1)) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_SENIOR_CONTRIBUTOR),
             getModelRolesModel: () => authModels.ModelRoles,
@@ -255,7 +255,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const datastoreProvider = sinon.spy(memoryDatastore(TEST_SEED_DATA_1)) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_ADMIN),
             getModelRolesModel: () => authModels.ModelRoles,
@@ -273,7 +273,7 @@ describe('/src/datastoreProviders/roles.ts', () => {
         const datastoreProvider = sinon.spy(memoryDatastore(TEST_SEED_DATA_1)) as DatastoreProvider
         const unprotectedOrm = orm({ datastoreProvider })
         const authModels = models({ BaseModel: unprotectedOrm.BaseModel })
-        const wrappedProvider = rolesDatastoreProvider(
+        const wrappedProvider = rolesProvider(
           {
             getUserObj: () => authModels.Users.create(TEST_USER_SUPER_ADMIN),
             getModelRolesModel: () => authModels.ModelRoles,

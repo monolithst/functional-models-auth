@@ -7,7 +7,7 @@ import { DatastoreProvider, OrmModelFactory, OrmModelInstance, OrmModel } from '
 import sinon from 'sinon'
 import { orm, ormQuery } from 'functional-models-orm'
 import memoryDatastore from 'functional-models-orm/datastore/memory'
-import { create as userDatastoreProvider } from '../../../src/datastoreProviders/user'
+import userProvider from '../../../src/datastoreProviders/user'
 import { SoftAuthError, PermissionError } from '../../../src/errors'
 import models from '../../../src/models'
 import { assertErrorThrown } from '../../utils'
@@ -60,7 +60,7 @@ const _setup = ({
     ? getCurrentUser 
     : _getDefaultTestUser(authModels.Users)
 
-  const instance = userDatastoreProvider({
+  const instance = userProvider({
     getCurrentUser,
     datastoreProvider,
     ...datastoreArgs,
